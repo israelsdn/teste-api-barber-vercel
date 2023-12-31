@@ -1,0 +1,113 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider          = "mysql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+  relationMode      = "prisma"
+}
+
+model barbearia {
+  id           Int        @id @default(autoincrement())
+  name         String     @db.VarChar(255)
+  login        String     @unique @db.VarChar(255)
+  senha_hash   String     @db.VarChar(255)
+  status       String    @db.VarChar(50)
+  barbeiros    barbeiro[]
+  produtos     produto[]
+  clientes     cliente[]
+  caixas       caixa[]
+  agendamentos agenda[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model barbeiro {
+  id           Int       @id @default(autoincrement())
+  nome         String    @db.VarChar(255)
+  login        String     @unique @db.VarChar(255)
+  senha_hash   String     @db.VarChar(255)
+  birthdate    DateTime
+  telefone     String    @db.VarChar(25)
+  email        String    @db.VarChar(255)
+  caixas       caixa[]
+  barbeariaId  Int
+  barbearia    barbearia @relation(fields: [barbeariaId], references: [id])
+  agendamentos agenda[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([barbeariaId])
+}
+
+model produto {
+  id          Int       @id @default(autoincrement())
+  nome        String    @db.VarChar(100)
+  valor       Decimal
+  servico     Boolean
+  estoque     Int?
+  barbeariaId Int
+  barbearia   barbearia @relation(fields: [barbeariaId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([barbeariaId])
+}
+
+model cliente {
+  id                Int       @id @default(autoincrement())
+  nome              String    @db.VarChar(255)
+  birthdate         DateTime
+  telefone          String    @db.VarChar(25)
+  email             String?   @db.VarChar(255)
+  ultimo_corte      DateTime?
+  quantidade_cortes Int @default(0)
+  barbeariaId       Int
+  barbearia         barbearia @relation(fields: [barbeariaId], references: [id])
+  agendamentos      agenda[]
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  caixa             caixa[]
+
+  @@index([barbeariaId])
+}
+
+model caixa {
+  id              Int       @id @default(autoincrement())
+  data            DateTime  @default(now())
+  valor           Decimal
+  forma_pagamento String    @db.VarChar(50)
+  produtos        Json
+  barbeariaId     Int
+  barbearia       barbearia @relation(fields: [barbeariaId], references: [id])
+  barbeiroId      Int
+  barbeiro        barbeiro  @relation(fields: [barbeiroId], references: [id])
+  clienteId       Int
+  cliente         cliente  @relation(fields: [clienteId], references: [id])
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([barbeariaId])
+  @@index([barbeiroId])
+  @@index([clienteId])
+}
+
+model agenda {
+  id          Int       @id @default(autoincrement())
+  data        DateTime
+  barbeariaId Int
+  barbearia   barbearia @relation(fields: [barbeariaId], references: [id])
+  barbeiroId  Int
+  barbeiro    barbeiro  @relation(fields: [barbeiroId], references: [id])
+  clienteId   Int
+  cliente     cliente   @relation(fields: [clienteId], references: [id])
+
+  @@index([barbeiroId])
+  @@index([barbeariaId])
+  @@index([clienteId])
+}
