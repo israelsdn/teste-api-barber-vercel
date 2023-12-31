@@ -61,7 +61,7 @@ export class ClientController {
         nome,
         telefone,
         barbeariaId,
-        birthdate: converToIso(birthdate),
+        birthdate: new Date(birthdate).toISOString(),
         email,
       },
     });
