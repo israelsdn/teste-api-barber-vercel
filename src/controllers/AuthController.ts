@@ -1,9 +1,4 @@
 import { prisma } from '../config';
-import {
-  DataInsufficientError,
-  DataNotMatchError,
-  NotFoundError,
-} from '../errors/ApiErrors';
 import { NextFunction, Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
@@ -16,15 +11,11 @@ export class AuthController {
     const { login, password } = req.body;
 
     if (!login) {
-      throw new DataInsufficientError({
-        message: 'Insert your login to enter.',
-      });
+      return res.status(422).json({ message: 'Insira o login da barbearia!' });
     }
 
     if (!password) {
-      throw new DataInsufficientError({
-        message: 'Insert your password to enter.',
-      });
+      return res.status(422).json({ message: 'Insira a senha da barbearia!' });
     }
 
     const barbearia = await prisma.barbearia.findUnique({
@@ -34,17 +25,13 @@ export class AuthController {
     });
 
     if (!barbearia) {
-      throw new NotFoundError({
-        message: "Email or password don't match.",
-      });
+      return res.status(401).json({ message: 'Login ou senha incorretos!' });
     }
 
     const passwordVerify = await bcrypt.compare(password, barbearia.senha_hash);
 
     if (!passwordVerify) {
-      throw new DataNotMatchError({
-        message: "Email or password don't match.",
-      });
+      return res.status(401).json({ message: 'Login ou senha incorretos!' });
     }
 
     const token = jwt.sign(
@@ -67,15 +54,11 @@ export class AuthController {
     const { login, password } = req.body;
 
     if (!login) {
-      throw new DataInsufficientError({
-        message: 'Insert your login to enter.',
-      });
+      return res.status(422).json({ message: 'Insira o login do barbeiro!' });
     }
 
     if (!password) {
-      throw new DataInsufficientError({
-        message: 'Insert your password to enter.',
-      });
+      return res.status(422).json({ message: 'Insira a senha da barbeiro!' });
     }
 
     const barbeiro = await prisma.barbeiro.findUnique({
@@ -85,17 +68,13 @@ export class AuthController {
     });
 
     if (!barbeiro) {
-      throw new NotFoundError({
-        message: "Email or password don't match.",
-      });
+      return res.status(401).json({ message: 'Login ou senha incorretos!' });
     }
 
     const passwordVerify = await bcrypt.compare(password, barbeiro.senha_hash);
 
     if (!passwordVerify) {
-      throw new DataNotMatchError({
-        message: 'Barbeiro.',
-      });
+      return res.status(401).json({ message: 'Login ou senha incorretos!' });
     }
 
     const token = jwt.sign(
@@ -118,9 +97,7 @@ export class AuthController {
     const authHeader = req.headers['authorization'];
 
     if (!authHeader) {
-      throw new NotFoundError({
-        message: "Token don't match.",
-      });
+      return res.status(404).json({ message: 'Token não encontrado!' });
     }
 
     try {
@@ -138,9 +115,7 @@ export class AuthController {
     const authHeader = req.headers['authorization'];
 
     if (!authHeader) {
-      throw new NotFoundError({
-        message: "Token don't match.",
-      });
+      return res.status(404).json({ message: 'Token não encontrado!' });
     }
 
     try {

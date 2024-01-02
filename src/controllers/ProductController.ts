@@ -1,5 +1,4 @@
 import { prisma } from '../config';
-import { DataInsufficientError, NotFoundError } from '../errors/ApiErrors';
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 
@@ -10,15 +9,15 @@ export class ProductController {
     const { nome, valor, estoque, barbeariaId, servico } = req.body;
 
     if (!nome) {
-      throw new DataInsufficientError({ message: 'Insert nome' });
+      return res.status(422).json({ message: 'Insira o nome do produto!' });
     }
 
     if (!valor) {
-      throw new DataInsufficientError({ message: 'Insert valor' });
+      return res.status(422).json({ message: 'Insira o valor do produto!' });
     }
 
     if (!barbeariaId) {
-      throw new DataInsufficientError({ message: 'Insert barbeariaId' });
+      return res.status(422).json({ message: 'Insira o id da barbearia!' });
     }
 
     const barbershopIdVerify = await prisma.barbearia.findMany({
@@ -26,7 +25,7 @@ export class ProductController {
     });
 
     if (barbershopIdVerify.length <= 0) {
-      throw new NotFoundError({ message: 'barbeariaId not found' });
+      return res.status(404).json({ message: 'Barbearia não encontrada' });
     }
 
     const createProduct = await prisma.produto.create({
@@ -40,7 +39,7 @@ export class ProductController {
     });
 
     res.status(201).json({
-      message: `Product ${createProduct.nome} created successfully`,
+      message: `Produto: ${createProduct.nome}, criado com sucesso!`,
     });
   }
 
@@ -49,7 +48,7 @@ export class ProductController {
     let estoqueResponse;
 
     if (!id) {
-      throw new DataInsufficientError({ message: 'Insert id' });
+      return res.status(422).json({ message: 'Insira o id do produto!' });
     }
 
     estoque === null
@@ -83,7 +82,7 @@ export class ProductController {
     const { id } = req.body;
 
     if (!id) {
-      throw new DataInsufficientError({ message: 'Insert id' });
+      return res.status(422).json({ message: 'Insira o id do produto!' });
     }
 
     const deleteProduct = await prisma.produto.delete({
@@ -106,9 +105,7 @@ export class ProductController {
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
-      throw new NotFoundError({
-        message: "Token don't match.",
-      });
+      return res.status(404).json({ message: 'Token não encontrado!' });
     }
 
     try {
@@ -128,9 +125,7 @@ export class ProductController {
 
       next();
     } catch (error) {
-      throw new NotFoundError({
-        message: 'Invalid token.',
-      });
+      return res.status(401).json({ message: 'Token invalido!' });
     }
   }
 }

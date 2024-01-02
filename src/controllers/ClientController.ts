@@ -1,9 +1,4 @@
 import { prisma } from '../config';
-import {
-  DataAlreadyExistsError,
-  DataInsufficientError,
-  NotFoundError,
-} from '../errors/ApiErrors';
 import { converToIso, getFormattedDate, toCompareDates } from '../utils';
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
@@ -15,21 +10,17 @@ export class ClientController {
     const { nome, birthdate, telefone, email, barbeariaId } = req.body;
 
     if (!nome) {
-      throw new DataInsufficientError({
-        message: 'Insert a date to schedule the service.',
-      });
+      return res.status(422).json({ message: 'Insira o nome do cliente!' });
     }
 
     if (!telefone) {
-      throw new DataInsufficientError({
-        message: 'Insert a date to schedule the service.',
-      });
+      return res.status(422).json({ message: 'Insira o telefone do cliente!' });
     }
 
     if (!barbeariaId) {
-      throw new DataInsufficientError({
-        message: 'Insert a date to schedule the service.',
-      });
+      return res
+        .status(422)
+        .json({ message: 'Insira o id da barbearia do cliente!' });
     }
 
     const barbershopVerify = await prisma.barbearia.findUnique({
@@ -37,22 +28,19 @@ export class ClientController {
     });
 
     if (!barbershopVerify) {
-      throw new NotFoundError({
-        message: 'Barbershop not found',
-      });
+      return res.status(404).json({ message: 'Barbearia não encontrada' });
     }
 
     const clientVerify = await prisma.cliente.findMany({
       where: {
-        nome: nome,
+        birthdate: new Date(birthdate).toISOString(),
         telefone: telefone,
       },
     });
 
     if (clientVerify.length > 0) {
-      throw new DataAlreadyExistsError({
-        message:
-          'There is already a customer with the same name and telephone number.',
+      return res.status(409).json({
+        message: 'Cliente já cadastrado com essas informações!',
       });
     }
 
@@ -66,15 +54,8 @@ export class ClientController {
       },
     });
 
-    const clientes = await prisma.cliente.findMany({
-      where: {
-        barbeariaId: barbeariaId,
-      },
-    });
-
     res.status(201).json({
-      clientes: clientes,
-      message: `Client ${createClient.nome} created successfully`,
+      message: `Cliente ${createClient.nome}, cadastrado com sucesso!`,
     });
   }
 
@@ -82,7 +63,7 @@ export class ClientController {
     const { id, nome, birthdate, telefone, email } = req.body;
 
     if (!id) {
-      throw new DataInsufficientError({ message: 'Insert id' });
+      return res.status(422).json({ message: 'Insira o nome do cliente!' });
     }
 
     const updateClient = await prisma.cliente.update({
@@ -109,24 +90,6 @@ export class ClientController {
     });
   }
 
-  async delete(req: Request, res: Response) {
-    const { id } = req.body;
-
-    if (!id) {
-      throw new DataInsufficientError({ message: 'Insert id' });
-    }
-
-    const deleteClient = await prisma.cliente.delete({
-      where: {
-        id: id,
-      },
-    });
-
-    res.status(204).json({
-      message: `Client ${deleteClient.nome} was deleted`,
-    });
-  }
-
   async find(_req: Request, res: Response) {
     const client = await prisma.cliente.findMany();
     res.status(200).json(client);
@@ -136,9 +99,7 @@ export class ClientController {
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
-      throw new NotFoundError({
-        message: "Token don't match.",
-      });
+      return res.status(404).json({ message: 'Token não encontrado!' });
     }
 
     try {
@@ -158,9 +119,7 @@ export class ClientController {
 
       next();
     } catch (error) {
-      throw new NotFoundError({
-        message: 'Invalid token.',
-      });
+      return res.status(401).json({ message: 'Token invalido!' });
     }
   }
 
@@ -268,21 +227,19 @@ export class ClientController {
     const authHeader = req.headers['authorization'];
 
     if (!authHeader) {
-      throw new NotFoundError({
-        message: "Token don't match.",
-      });
+      return res.status(404).json({ message: 'Token não encontrado!' });
     }
 
     if (!dataInicial) {
-      throw new DataInsufficientError({
-        message: 'Insert a dataInicial of the period.',
-      });
+      return res
+        .status(422)
+        .json({ message: 'Insira a dataInicial do periodo!' });
     }
 
     if (!dataFinal) {
-      throw new DataInsufficientError({
-        message: 'Insert a dataFinal of the period.',
-      });
+      return res
+        .status(422)
+        .json({ message: 'Insira a dataFinal do periodo!' });
     }
 
     try {
@@ -306,9 +263,7 @@ export class ClientController {
 
       next();
     } catch (error) {
-      throw new NotFoundError({
-        message: 'Invalid token.',
-      });
+      return res.status(401).json({ message: 'Token invalido!' });
     }
   }
 
@@ -320,9 +275,7 @@ export class ClientController {
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
-      throw new NotFoundError({
-        message: "Token don't match.",
-      });
+      return res.status(404).json({ message: 'Token não encontrado!' });
     }
 
     const { date } = req.body;
@@ -356,9 +309,7 @@ export class ClientController {
       res.status(200).json(birthdatesOfMonth);
       next();
     } catch (error) {
-      throw new NotFoundError({
-        message: 'Invalid token.',
-      });
+      return res.status(401).json({ message: 'Token invalido!' });
     }
   }
 }

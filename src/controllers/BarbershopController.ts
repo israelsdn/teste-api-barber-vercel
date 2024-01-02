@@ -2,35 +2,29 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 
 import { prisma } from '../config';
-import {
-  DataAlreadyExistsError,
-  DataInsufficientError,
-  DataNotMatchError,
-} from '../errors/ApiErrors';
 
 export class BarbershopController {
   async create(req: Request, res: Response) {
     const { name, login, password, status } = req.body;
 
     if (!name) {
-      throw new DataInsufficientError({ message: 'Insert name' });
+      return res.status(422).json({ message: 'Insira o nome da barbearia!' });
     }
 
     if (!login) {
-      throw new DataInsufficientError({ message: 'Insert login' });
+      return res.status(422).json({ message: 'Insira o login da barbearia!' });
     }
 
     if (!password) {
-      throw new DataInsufficientError({ message: 'Insert password' });
+      return res.status(422).json({ message: 'Insira a senha da barbearia!' });
     }
 
     const loginVerify = await prisma.barbearia.findUnique({
       where: { login },
     });
     if (loginVerify) {
-      throw new DataAlreadyExistsError({
-        message:
-          'The same login already exists, check or enter a different one.',
+      return res.status(409).json({
+        message: 'Já existe um login igual cadastrado, tente um diferente!',
       });
     }
 
@@ -46,7 +40,7 @@ export class BarbershopController {
     });
 
     res.status(201).json({
-      message: `Barbershop ${createBarbershop.name} created successfully`,
+      message: `Barbearia ${createBarbershop.name}, criada com sucesso!`,
     });
   }
 
@@ -54,15 +48,17 @@ export class BarbershopController {
     const { login, password, newPassword } = req.body;
 
     if (!login) {
-      throw new DataInsufficientError({ message: 'Insert login' });
+      return res.status(422).json({ message: 'Insira o login da barbearia!' });
     }
 
     if (!password) {
-      throw new DataInsufficientError({ message: 'Insert password' });
+      return res.status(422).json({ message: 'Insira a senha da barbearia!' });
     }
 
     if (!newPassword) {
-      throw new DataInsufficientError({ message: 'Insert newPassword' });
+      return res
+        .status(422)
+        .json({ message: 'Insira a nova senha da barbearia!' });
     }
 
     const barbershop = await prisma.barbearia.findUnique({
@@ -75,7 +71,7 @@ export class BarbershopController {
     );
 
     if (!passwordVerify) {
-      throw new DataNotMatchError({ message: "Passwords don't match!" });
+      return res.status(400).json({ message: 'A senha atual não coincidem!' });
     }
 
     const senha_hash = await bcrypt.hash(newPassword, await bcrypt.genSalt(2));

@@ -4,11 +4,6 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 
 import { prisma } from '../config';
-import {
-  DataAlreadyExistsError,
-  DataInsufficientError,
-  NotFoundError,
-} from '../errors/ApiErrors';
 import { getFormattedDate } from '../utils';
 
 const secret = process.env.SECRET as string;
@@ -18,23 +13,27 @@ export class BarberController {
     const { nome, birthdate, telefone, email, barbeariaId } = req.body;
 
     if (!nome) {
-      throw new DataInsufficientError({ message: 'Insert name' });
+      return res.status(422).json({ message: 'Insira o nome do barbeiro!' });
     }
 
     if (!birthdate) {
-      throw new DataInsufficientError({ message: 'Insert birthdate' });
+      return res
+        .status(422)
+        .json({ message: 'Insira o aniversário do barbeiro!' });
     }
 
     if (!telefone) {
-      throw new DataInsufficientError({ message: 'Insert telefone' });
+      return res
+        .status(422)
+        .json({ message: 'Insira o telefone do barbeiro!' });
     }
 
     if (!email) {
-      throw new DataInsufficientError({ message: 'Insert email' });
+      return res.status(422).json({ message: 'Insira o email do barbeiro!' });
     }
 
     if (!barbeariaId) {
-      throw new DataInsufficientError({ message: 'Insert barbeariaId' });
+      return res.status(422).json({ message: 'Insira o id da barbearia!' });
     }
 
     const barbershopIdVerify = await prisma.barbearia.findMany({
@@ -42,20 +41,20 @@ export class BarberController {
     });
 
     if (barbershopIdVerify.length <= 0) {
-      throw new NotFoundError({ message: 'barbeariaId not found' });
+      return res.status(404).json({ message: 'Barbearia não encontrada!' });
     }
 
     const nameVerify = await prisma.barbeiro.findMany({
       where: {
         barbeariaId: barbeariaId,
         nome,
+        telefone,
       },
     });
 
     if (nameVerify.length > 0) {
-      throw new DataAlreadyExistsError({
-        message:
-          'There is already a barber with that name, check or enter a different one.',
+      return res.status(409).json({
+        message: 'Barbeiro já cadastrado com esse nome e telefone!',
       });
     }
 
@@ -89,7 +88,7 @@ export class BarberController {
     updateLogin;
 
     res.status(201).json({
-      message: `Barber ${createBarber.nome} created successfully`,
+      message: `Barbeiro ${createBarber.nome}, criado com sucesso!`,
     });
   }
 
@@ -97,7 +96,7 @@ export class BarberController {
     const { id, nome, birthdate, telefone, email } = req.body;
 
     if (!id) {
-      throw new DataInsufficientError({ message: 'Insert id' });
+      return res.status(422).json({ message: 'Insira o id do barbeiro!' });
     }
 
     const updateBarber = await prisma.barbeiro.update({
@@ -128,7 +127,7 @@ export class BarberController {
     const { id } = req.body;
 
     if (!id) {
-      throw new DataInsufficientError({ message: 'Insert id' });
+      return res.status(422).json({ message: 'Insira o id do barbeiro!' });
     }
 
     await prisma.barbeiro.delete({
@@ -149,9 +148,7 @@ export class BarberController {
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
-      throw new NotFoundError({
-        message: "Token don't match.",
-      });
+      return res.status(404).json({ message: 'Token não encontrado!' });
     }
 
     try {
@@ -171,9 +168,7 @@ export class BarberController {
 
       next();
     } catch (error) {
-      throw new NotFoundError({
-        message: 'Invalid token.',
-      });
+      return res.status(401).json({ message: 'Token invalido!' });
     }
   }
 

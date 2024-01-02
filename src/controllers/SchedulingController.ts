@@ -2,11 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 
 import { prisma } from '../config';
-import {
-  DataAlreadyExistsError,
-  DataInsufficientError,
-  NotFoundError,
-} from '../errors/ApiErrors';
+
 import { converToIso } from '../utils';
 
 const secret = process.env.SECRET as string;
@@ -16,27 +12,23 @@ export class SchedulingController {
     const { data, barbeariaId, barbeiroId, clienteId } = req.body;
 
     if (!data) {
-      throw new DataInsufficientError({
-        message: 'Insert a date to schedule the service.',
-      });
+      return res.status(422).json({ message: 'Insira a data do agendamento!' });
     }
 
     if (!barbeariaId) {
-      throw new DataInsufficientError({
-        message: 'Insert a barbeshop for the service.',
-      });
+      return res.status(422).json({ message: 'Insira o id da barbearia!' });
     }
 
     if (!barbeiroId) {
-      throw new DataInsufficientError({
-        message: 'Insert a barber for the service.',
-      });
+      return res
+        .status(422)
+        .json({ message: 'Insira o barbeiro do agendamento!' });
     }
 
     if (!clienteId) {
-      throw new DataInsufficientError({
-        message: 'Insert a client for the service.',
-      });
+      return res
+        .status(422)
+        .json({ message: 'Insira o cliente do agendamento!' });
     }
 
     const barbeiroIdVerify = await prisma.barbeiro.findUnique({
@@ -46,9 +38,7 @@ export class SchedulingController {
     });
 
     if (!barbeiroIdVerify) {
-      throw new NotFoundError({
-        message: 'Barber not found',
-      });
+      return res.status(404).json({ message: 'Barbeiro não encontrado' });
     }
 
     const clientVerify = await prisma.cliente.findUnique({
@@ -56,9 +46,7 @@ export class SchedulingController {
     });
 
     if (!clientVerify) {
-      throw new NotFoundError({
-        message: 'Client not found',
-      });
+      return res.status(404).json({ message: 'Cliente não encontrado' });
     }
 
     const barbershopVerify = await prisma.barbearia.findUnique({
@@ -66,9 +54,7 @@ export class SchedulingController {
     });
 
     if (!barbershopVerify) {
-      throw new NotFoundError({
-        message: 'Barbershop not found',
-      });
+      return res.status(404).json({ message: 'Barbearia não encontrada' });
     }
 
     const scheduleVerify = await prisma.agenda.findMany({
@@ -82,9 +68,8 @@ export class SchedulingController {
     });
 
     if (scheduleVerify.length > 0) {
-      throw new DataAlreadyExistsError({
-        message:
-          'There is already a schedule for that date, insert a different date.',
+      return res.status(409).json({
+        message: 'Esse barbeiro já tem um agendamento para esse horario!',
       });
     }
 
@@ -98,7 +83,7 @@ export class SchedulingController {
     });
 
     res.status(200).json({
-      message: `Scheduling for ${createSchedule.data} created successfully`,
+      message: `Agendamento ${createSchedule.data}, criado com sucesso!`,
     });
   }
 
@@ -106,7 +91,7 @@ export class SchedulingController {
     const { id, barbeiroId, data, clienteId } = req.body;
 
     if (!id) {
-      throw new DataInsufficientError({ message: 'Insert id' });
+      return res.status(422).json({ message: 'Insira o id do agendamento!' });
     }
 
     const updateShedule = await prisma.agenda.update({
@@ -152,7 +137,7 @@ export class SchedulingController {
     const { id } = req.body;
 
     if (!id) {
-      throw new DataInsufficientError({ message: 'Insert id' });
+      return res.status(422).json({ message: 'Insira o id do agendamento!' });
     }
 
     const deleteShedule = await prisma.agenda.delete({
@@ -170,9 +155,7 @@ export class SchedulingController {
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
-      throw new NotFoundError({
-        message: "Token don't match.",
-      });
+      return res.status(404).json({ message: 'Token não encontrado!' });
     }
 
     try {
@@ -193,9 +176,7 @@ export class SchedulingController {
 
       next();
     } catch (error) {
-      throw new NotFoundError({
-        message: 'Invalid token.',
-      });
+      return res.status(401).json({ message: 'Token invalido!' });
     }
   }
 }

@@ -74,7 +74,6 @@ routes.delete('/delete-scheduler', new SchedulingController().delete);
 routes.post('/create-client', new ClientController().create);
 routes.put('/update-client', new ClientController().update);
 routes.get('/find-client', new ClientController().find);
-routes.delete('/delete-client', new ClientController().delete);
 routes.get(
   '/find-clients-barbershop',
   new ClientController().findByBarbershopID,

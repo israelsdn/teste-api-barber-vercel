@@ -1,13 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
 
 import { prisma } from '../config';
-import {
-  DataNotMatchError,
-  DataInsufficientError,
-  NotFoundError,
-} from '../errors/ApiErrors';
 import { getFormattedDate } from '../utils';
-import jwt from 'jsonwebtoken';
 
 const secret = process.env.SECRET as string;
 
@@ -23,33 +18,31 @@ export class CashBoxControlller {
     } = req.body;
 
     if (!valor) {
-      throw new DataInsufficientError({
-        message: 'Insert a value for the service.',
-      });
+      return res.status(422).json({ message: 'Insira o valor do serviço!' });
+    }
+
+    if (!clienteId) {
+      return res.status(422).json({ message: 'Insira o cliente do serviço!' });
     }
 
     if (!barbeariaId) {
-      throw new DataInsufficientError({
-        message: 'Insert a barbeshop for the service.',
-      });
+      return res
+        .status(422)
+        .json({ message: 'Insira o barbeshopId do serviço!' });
     }
 
     if (!barbeiroId) {
-      throw new DataInsufficientError({
-        message: 'Insert a barber for the service.',
-      });
+      return res.status(422).json({ message: 'Insira o barbeiro do serviço!' });
     }
 
     if (!forma_pagamento) {
-      throw new DataInsufficientError({
-        message: 'Insert a payment type for the service.',
-      });
+      return res
+        .status(422)
+        .json({ message: 'Insira a forma de pagemnto do serviço!' });
     }
 
     if (!produtos) {
-      throw new DataInsufficientError({
-        message: 'Insert a products for the service.',
-      });
+      return res.status(422).json({ message: 'Insira o serviço!' });
     }
 
     const verifyBarberID = await prisma.barbeiro.findUnique({
@@ -57,8 +50,8 @@ export class CashBoxControlller {
     });
 
     if (!verifyBarberID) {
-      throw new DataNotMatchError({
-        message: 'Not found a barber with the same ID.',
+      return res.status(404).json({
+        message: 'Não foi encontrado um barbeiro com o ID informado!',
       });
     }
 
@@ -67,8 +60,8 @@ export class CashBoxControlller {
     });
 
     if (!verifyBarbeshopID) {
-      throw new DataNotMatchError({
-        message: 'Not found a barbershop with the same ID.',
+      return res.status(404).json({
+        message: 'Não foi encontrado uma barbearia com o ID informado!',
       });
     }
 
@@ -90,21 +83,24 @@ export class CashBoxControlller {
       data: { ultimo_corte: timestamp },
     });
 
-    res.status(201).json({ cashbox, setLastCut });
+    res.status(201).json({
+      setLastCut,
+      message: `Caixa no valor de R$: ${cashbox.valor} reais, criado com sucesso!`,
+    });
   }
 
   async update(req: Request, res: Response) {
     const { cashboxID, valor, forma_pagamento, produtos } = req.body;
 
     if (!cashboxID) {
-      throw new DataInsufficientError({
-        message: 'Insert a cashboxID to can update',
+      return res.status(404).json({
+        message: 'Não foi encontrado um caixa com o ID informado!',
       });
     }
 
     if (!valor && !forma_pagamento && !produtos) {
-      throw new DataInsufficientError({
-        message: 'Enter at least one parameter ',
+      return res.status(422).json({
+        message: 'Preencha todos os campos',
       });
     }
 
@@ -143,8 +139,8 @@ export class CashBoxControlller {
     const authHeader = req.headers['authorization'];
 
     if (!authHeader) {
-      throw new NotFoundError({
-        message: "Token don't match.",
+      return res.status(404).json({
+        message: 'Token não informado',
       });
     }
 
@@ -174,8 +170,8 @@ export class CashBoxControlller {
 
       next();
     } catch (error) {
-      throw new NotFoundError({
-        message: 'Invalid token.',
+      return res.status(401).json({
+        message: 'Token inválido',
       });
     }
   }
@@ -220,20 +216,20 @@ export class CashBoxControlller {
     const authHeader = req.headers['authorization'];
 
     if (!authHeader) {
-      throw new NotFoundError({
-        message: "Token don't match.",
+      return res.status(404).json({
+        message: 'Token não informado',
       });
     }
 
     if (!dataInicial) {
-      throw new DataInsufficientError({
-        message: 'Insert a dataInicial of the period.',
+      return res.status(422).json({
+        message: 'Insira a dataInicial do periodo',
       });
     }
 
     if (!dataFinal) {
-      throw new DataInsufficientError({
-        message: 'Insert a dataFinal of the period.',
+      return res.status(422).json({
+        message: 'Insira a dataFinal do periodo',
       });
     }
 
@@ -259,8 +255,8 @@ export class CashBoxControlller {
 
       next();
     } catch (error) {
-      throw new NotFoundError({
-        message: `${error}`,
+      return res.status(401).json({
+        message: 'Token inválido',
       });
     }
   }
@@ -274,26 +270,26 @@ export class CashBoxControlller {
     const authHeader = req.headers['authorization'];
 
     if (!authHeader) {
-      throw new NotFoundError({
-        message: "Token don't match.",
+      return res.status(404).json({
+        message: 'Token não informado!',
       });
     }
 
     if (!dataInicial) {
-      throw new DataInsufficientError({
-        message: 'Insert a dataInicial of the period.',
+      return res.status(422).json({
+        message: 'Insira a dataInicial do periodo!',
       });
     }
 
     if (!dataFinal) {
-      throw new DataInsufficientError({
-        message: 'Insert a dataFinal of the period.',
+      return res.status(422).json({
+        message: 'Insira a dataFinal do periodo!',
       });
     }
 
     if (!barbeiroId) {
-      throw new DataInsufficientError({
-        message: 'Insert a barbeiroId.',
+      return res.status(422).json({
+        message: 'Insira o barbeiroId!',
       });
     }
 
@@ -318,8 +314,8 @@ export class CashBoxControlller {
 
       next();
     } catch (error) {
-      throw new NotFoundError({
-        message: 'Invalid token.',
+      return res.status(401).json({
+        message: 'Token inválido',
       });
     }
   }
@@ -333,20 +329,20 @@ export class CashBoxControlller {
     const authHeader = req.headers['authorization'];
 
     if (!authHeader) {
-      throw new NotFoundError({
-        message: "Token don't match.",
+      return res.status(404).json({
+        message: 'Token não informado',
       });
     }
 
     if (!dataInicial) {
-      throw new DataInsufficientError({
-        message: 'Insert a dataInicial of the period.',
+      return res.status(422).json({
+        message: 'Insira a dataInicial do periodo!',
       });
     }
 
     if (!dataFinal) {
-      throw new DataInsufficientError({
-        message: 'Insert a dataFinal of the period.',
+      return res.status(422).json({
+        message: 'Insira a dataFinal do periodo!',
       });
     }
 
@@ -379,8 +375,8 @@ export class CashBoxControlller {
 
       next();
     } catch (error) {
-      throw new NotFoundError({
-        message: `${error}`,
+      return res.status(401).json({
+        message: 'Token inválido',
       });
     }
   }
@@ -390,20 +386,20 @@ export class CashBoxControlller {
     const authHeader = req.headers['authorization'];
 
     if (!authHeader) {
-      throw new NotFoundError({
-        message: "Token don't match.",
+      return res.status(404).json({
+        message: 'Token não informado',
       });
     }
 
     if (!dataInicial) {
-      throw new DataInsufficientError({
-        message: 'Insert a dataInicial of the period.',
+      return res.status(422).json({
+        message: 'Insira a dataInicial do periodo!',
       });
     }
 
     if (!dataFinal) {
-      throw new DataInsufficientError({
-        message: 'Insert a dataFinal of the period.',
+      return res.status(422).json({
+        message: 'Insira a dataFinal do periodo!',
       });
     }
 
@@ -436,8 +432,8 @@ export class CashBoxControlller {
 
       next();
     } catch (error) {
-      throw new NotFoundError({
-        message: `${error}`,
+      return res.status(401).json({
+        message: 'Token inválido',
       });
     }
   }
